@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#f2ede4">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="HYROX">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="apple-touch-startup-image" href="/splash.jpg">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>하이록스 릴레이</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCmERWUgphUyw8NJQbMbdsS0fw4oEw_UMo",
+    authDomain:        "hyrox-mt.firebaseapp.com",
+    databaseURL:       "https://hyrox-mt-default-rtdb.firebaseio.com",
+    projectId:         "hyrox-mt",
+    storageBucket:     "hyrox-mt.firebasestorage.app",
+    messagingSenderId: "200324260070",
+    appId:             "1:200324260070:web:f1df13615e7a49092d5b27"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+  const PATH = "hyrox/relay2";
+
+  window.$fb = {
+    save: (data) => set(ref(db, PATH), data),
+    listen: (cb) => onValue(ref(db, PATH), snap => cb(snap.exists() ? snap.val() : null))
+  };
+  window.$fbReady = true;
+  window.dispatchEvent(new Event('fb-ready'));
+</script>
+
+<style>
+:root {
+  --bg:    #f2ede4;
+  --bg2:   #e8e2d8;
+  --card:  #ffffff;
+  --blue:  #3182f6;
+  --blight:#dbeafe;
+  --pink:  #f43f7f;
+  --plight:#fce7f3;
+  --run:   #f97316;
+  --rlight:#fff4f0;
+  --work:  #7c3aed;
+  --wlight:#ede9fe;
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --t1: #1a1a1a;
+  --t2: #6b6b6b;
+  --t3: #b0b0b0;
+  --bd: #ddd8ce;
+  --r: 16px;
+  --sh: 0 2px 12px rgba(0,0,0,0.07);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);min-height:100vh}
+body{color:var(--t1);font-family:'Noto Sans KR',-apple-system,sans-serif;font-size:15px;max-width:480px;margin:0 auto}
+
+/* ─ SETUP OVERLAY ─ */
+#setup{position:fixed;inset:0;background:var(--bg);z-index:999;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:56px 24px 40px}
+#setup.hide{display:none}
+.s-logo{font-size:30px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px}
+.s-logo b{color:var(--blue)}
+.s-sub{font-size:14px;color:var(--t2);margin-bottom:32px;font-weight:500}
+.s-card{background:var(--card);border-radius:24px;padding:22px 20px;width:100%;max-width:360px;box-shadow:var(--sh)}
+.s-lbl{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+/* 팀 탭 */
+.s-teams{display:flex;gap:8px;margin-bottom:20px}
+.s-team-btn{flex:1;padding:11px 0;border:2px solid var(--bd);border-radius:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;background:var(--bg);color:var(--t2);transition:all .18s}
+.s-team-btn.am{background:var(--blue);border-color:var(--blue);color:#fff}
+.s-team-btn.aw{background:var(--pink);border-color:var(--pink);color:#fff}
+/* 멤버 목록 */
+.s-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px;max-height:340px;overflow-y:auto}
+.s-member{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg);border:2px solid transparent;border-radius:14px;cursor:pointer;transition:all .15s;user-select:none}
+.s-member:active{transform:scale(.98)}
+.s-member.pick-m{border-color:var(--blue);background:var(--blight)}
+.s-member.pick-w{border-color:var(--pink);background:var(--plight)}
+.s-av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0}
+.s-av.m{background:var(--blight);color:var(--blue)}
+.s-av.w{background:var(--plight);color:var(--pink)}
+.s-minfo{flex:1;min-width:0}
+.s-mname{font-size:16px;font-weight:700}
+.s-msub{font-size:12px;color:var(--t2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s-radio{width:22px;height:22px;border-radius:50%;border:2px solid var(--bd);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;transition:all .15s}
+.s-member.pick-m .s-radio{background:var(--blue);border-color:var(--blue)}
+.s-member.pick-w .s-radio{background:var(--pink);border-color:var(--pink)}
+/* 입장 버튼 */
+.s-enter{width:100%;border:none;border-radius:14px;padding:14px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:12px;display:none}
+.s-enter.show{display:block}
+.s-enter.em{background:var(--blue);color:#fff}
+.s-enter.ew{background:var(--pink);color:#fff}
+/* 새 멤버 추가 */
+.s-divider{display:flex;align-items:center;gap:10px;margin:14px 0 12px}
+.s-divider::before,.s-divider::after{content:'';flex:1;height:1px;background:var(--bd)}
+.s-divider span{font-size:12px;color:var(--t3);font-weight:500}
+.s-new-row{display:flex;gap:8px}
+.s-new-inp{flex:1;background:var(--bg);border:2px solid var(--bd);border-radius:12px;padding:11px 13px;font-size:15px;font-family:inherit;color:var(--t1);outline:none}
+.s-new-inp:focus{border-color:var(--blue);background:#fff}
+.s-new-inp::placeholder{color:var(--t3)}
+.s-new-btn{background:var(--blue);color:#fff;border:none;border-radius:12px;padding:11px 16px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap}
+.s-new-btn.pw{background:var(--pink)}
+/* 로딩 */
+.s-loading{text-align:center;padding:28px 0}
+.spinner{width:28px;height:28px;border:3px solid var(--bd);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.s-empty{text-align:center;padding:16px 0 8px;color:var(--t2);font-size:14px;line-height:1.7}
+
+/* ─ SYNC BAR ─ */
+.sync-bar{display:flex;align-items:center;gap:8px;padding:7px 16px;background:var(--bg2);border-bottom:1px solid var(--bd);font-size:12px;color:var(--t2)}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot.live{background:var(--green)}
+.dot.wait{background:var(--amber);animation:blink .9s infinite}
+.dot.err{background:var(--pink)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-txt{flex:1}
+.sync-btns{display:flex;gap:6px}
+.sync-btn{background:none;border:1px solid var(--bd);border-radius:8px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--t2);cursor:pointer;font-family:inherit}
+
+/* ─ TOPBAR ─ */
+.topbar{background:var(--bg);padding:16px 20px 0;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--bd)}
+.topbar-title{font-size:22px;font-weight:800;padding-bottom:12px;letter-spacing:-0.5px}
+.topbar-title b{color:var(--blue)}
+.team-sw{display:flex;gap:8px;padding-bottom:12px}
+.team-btn{flex:1;padding:10px 0;border:2px solid var(--bd);border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;background:var(--card);color:var(--t2);font-family:inherit;transition:all .2s}
+.team-btn.men.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.team-btn.women.on{background:var(--pink);border-color:var(--pink);color:#fff}
+.nav-tabs{display:flex;overflow-x:auto;scrollbar-width:none;border-top:1px solid var(--bd)}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{flex:1;min-width:68px;padding:11px 0 10px;border:none;background:none;font-size:13px;font-weight:500;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;font-family:inherit;transition:all .2s}
+.nav-tab.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:700}
+
+/* ─ PANEL ─ */
+.panel{display:none;padding-bottom:100px;background:var(--bg)}
+.panel.on{display:block}
+
+/* ─ WHO BANNER ─ */
+.who{margin:14px 16px 6px;background:var(--card);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:var(--sh)}
+.who-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0}
+.who-av.m{background:var(--blight);color:var(--blue)}
+.who-av.w{background:var(--plight);color:var(--pink)}
+.who-info{flex:1}
+.who-name{font-size:16px;font-weight:700}
+.who-sub{font-size:12px;color:var(--t2);margin-top:2px}
+.who-badge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px}
+.wb-m{background:var(--blight);color:var(--blue)}
+.wb-w{background:var(--plight);color:var(--pink)}
+.who-change{background:none;border:none;font-size:12px;color:var(--t3);cursor:pointer;font-family:inherit;padding:4px 8px;border-radius:8px}
+.who-change:active{background:var(--bg)}
+
+/* ─ SECTION ─ */
+.sec{padding:20px 20px 10px;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase}
+
+/* ─ CARD ─ */
+.card{background:var(--card);border-radius:var(--r);margin:0 16px 10px;box-shadow:var(--sh);overflow:hidden}
+
+/* ─ INPUT ROW ─ */
+.inp-row{display:flex;gap:8px;align-items:center;padding:16px}
+.inp{flex:1;background:var(--bg);border:2px solid var(--bd);border-radius:12px;padding:12px 14px;font-size:15px;font-family:inherit;font-weight:500;color:var(--t1);outline:none;transition:border-color .2s}
+.inp:focus{border-color:var(--blue);background:#fff}
+.inp::placeholder{color:var(--t3)}
+.btn{background:var(--blue);color:#fff;border:none;border-radius:12px;padding:12px 20px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap}
+.btn.pk{background:var(--pink)}
+.btn:active{opacity:.85}
+
+/* ─ MEMBER ROW ─ */
+.mi{display:flex;align-items:center;padding:14px 16px;gap:12px;border-bottom:1px solid #f0ece4}
+.mi:last-child{border-bottom:none}
+.av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0}
+.av.m{background:var(--blight);color:var(--blue)}
+.av.w{background:var(--plight);color:var(--pink)}
+.mi-body{flex:1}
+.mi-name{font-size:15px;font-weight:700}
+.mi-sub{font-size:12px;color:var(--t2);margin-top:2px}
+.del{width:32px;height:32px;border-radius:50%;background:var(--bg);border:none;color:var(--t3);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit}
+.del:active{color:var(--pink)}
+
+/* ─ STATION ROW ─ */
+.sti{border-bottom:1px solid #f0ece4;overflow:hidden}
+.sti:last-child{border-bottom:none}
+.sth{display:flex;align-items:center;padding:13px 16px;gap:10px;cursor:pointer;user-select:none}
+.sth:active{background:var(--bg)}
+.stno{font-size:11px;font-weight:700;color:var(--t3);width:26px;flex-shrink:0}
+.stio{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.stio.run{background:var(--rlight)}
+.stio.work{background:var(--wlight)}
+.stin{flex:1;min-width:0}
+.stnm{font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.stds{font-size:12px;color:var(--t2);margin-top:1px}
+.tpill{font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;flex-shrink:0}
+.tpill.run{background:var(--rlight);color:var(--run)}
+.tpill.work{background:var(--wlight);color:var(--work)}
+.atag{font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.stt{font-size:15px;font-weight:700;color:var(--green);flex-shrink:0}
+.stt.e{color:var(--t3);font-weight:400;font-size:13px}
+.chv{color:var(--t3);font-size:14px;margin-left:2px;transition:transform .2s;flex-shrink:0}
+.chv.o{transform:rotate(90deg)}
+.stb{display:none;padding:0 16px 14px;background:var(--bg);border-top:1px solid #f0ece4}
+.stb.o{display:block}
+
+/* ─ CHIPS ─ */
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding-top:12px}
+.chip{padding:7px 14px;border-radius:20px;background:var(--card);border:2px solid var(--bd);font-size:13px;font-weight:600;color:var(--t2);cursor:pointer;font-family:inherit;transition:all .15s}
+.chip:active{transform:scale(.96)}
+.chip.sm{background:var(--blight);border-color:var(--blue);color:var(--blue)}
+.chip.sw{background:var(--plight);border-color:var(--pink);color:var(--pink)}
+.chip.un{color:var(--t3);border-style:dashed}
+
+/* ─ TIME INPUT ─ */
+.twrap{display:flex;align-items:center;gap:8px;padding-top:12px}
+.tbox{display:flex;align-items:center;gap:4px;background:var(--card);border:2px solid var(--bd);border-radius:12px;padding:10px 12px;flex:1}
+.tbox:focus-within{border-color:var(--blue)}
+.tbox input{width:40px;background:none;border:none;text-align:center;font-size:22px;font-weight:700;color:var(--t1);outline:none;font-family:inherit}
+.tbox input::placeholder{color:var(--t3);font-size:16px;font-weight:400}
+.tcolon{font-size:20px;font-weight:700;color:var(--t3)}
+.tunit{font-size:11px;color:var(--t3);margin-left:6px}
+.sv{background:var(--blue);color:#fff;border:none;border-radius:12px;padding:11px 18px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap}
+.sv:active{opacity:.8}
+
+/* ─ SESSION BAR ─ */
+.sbar{display:flex;gap:6px;padding:14px 16px 0;overflow-x:auto;scrollbar-width:none}
+.sbar::-webkit-scrollbar{display:none}
+.schip{display:inline-flex;align-items:center;gap:5px;padding:8px 12px;border-radius:20px;background:var(--card);border:2px solid var(--bd);font-size:13px;font-weight:700;color:var(--t2);cursor:pointer;white-space:nowrap;font-family:inherit;flex-shrink:0}
+.schip.am{background:var(--blue);border-color:var(--blue);color:#fff}
+.schip.aw{background:var(--pink);border-color:var(--pink);color:#fff}
+.schip-btn{background:rgba(0,0,0,0.1);border:none;border-radius:5px;width:19px;height:19px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:inherit;font-family:inherit;padding:0;line-height:1;flex-shrink:0}
+.schip.am .schip-btn,.schip.aw .schip-btn{background:rgba(255,255,255,0.25)}
+.schip-btn:active{opacity:.6}
+.sadd{width:36px;height:36px;border-radius:50%;background:var(--card);border:2px dashed var(--bd);font-size:22px;color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* ─ HERO ─ */
+.hero{margin:14px 16px 0;background:var(--card);border-radius:var(--r);padding:22px 20px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;top:0;left:0;right:0;height:4px}
+.hero.hm::after{background:var(--blue)}
+.hero.hw::after{background:var(--pink)}
+.hlbl{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase}
+.htime{font-size:48px;font-weight:800;line-height:1;margin:6px 0 4px;letter-spacing:-1px}
+.hero.hm .htime{color:var(--blue)}
+.hero.hw .htime{color:var(--pink)}
+.hsub{font-size:13px;color:var(--t2)}
+.hpills{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.hpill{background:var(--bg);border-radius:10px;padding:6px 12px;font-size:12px;color:var(--t2);font-weight:600}
+.hpill b{color:var(--t1)}
+
+/* ─ SUMMARY TABLE ─ */
+.stbl{margin:10px 16px 0;background:var(--card);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.sr{display:flex;align-items:center;padding:12px 16px;gap:10px;border-bottom:1px solid #f0ece4}
+.sr:last-child{border-bottom:none}
+.sr.tot{background:var(--bg);border-top:2px solid var(--bd)}
+.srico{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.srb{flex:1;min-width:0}
+.srn{font-size:13px;font-weight:700}
+.srw{font-size:11px;color:var(--t2);margin-top:1px}
+.srcells{display:flex;gap:8px}
+.srcell{text-align:center;min-width:52px}
+.srv{font-size:15px;font-weight:700;color:var(--t1)}
+.srv.best{color:var(--amber)}
+.srv.e{color:var(--t3);font-weight:400;font-size:12px}
+.srsl{font-size:10px;color:var(--t3);margin-top:1px}
+.bb{display:inline-block;background:#fffbeb;border:1px solid #fde68a;color:var(--amber);font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px}
+
+/* ─ EMPTY ─ */
+.empty{text-align:center;padding:60px 20px;color:var(--t2)}
+.empty .ei{font-size:44px;margin-bottom:14px}
+.empty p{font-size:14px;line-height:1.7}
+
+/* ─ TOAST ─ */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--t1);color:#fff;padding:12px 22px;border-radius:24px;font-size:14px;font-weight:600;opacity:0;transition:all .25s;pointer-events:none;z-index:9999;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,0.2)}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.ro-hint{font-size:12px;color:var(--t3);padding:8px 0;font-style:italic}
+
+/* ── COACH MODE ── */
+#coach-view{display:none;padding-bottom:80px;background:var(--bg)}
+#coach-view.on{display:block}
+.coach-topbar{background:var(--bg);padding:16px 20px 12px;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--bd)}
+.coach-title{font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:2px}
+.coach-title b{color:var(--amber)}
+.coach-sub{font-size:13px;color:var(--t2);font-weight:500}
+/* 팀 블록 */
+.coach-team-block{margin:14px 16px 0}
+.coach-team-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.coach-team-label{font-size:16px;font-weight:800}
+.coach-team-badge{font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px}
+.ctb-m{background:var(--blight);color:var(--blue)}
+.ctb-w{background:var(--plight);color:var(--pink)}
+.coach-best{font-size:13px;color:var(--t2);margin-left:auto;font-weight:600}
+.coach-best b{font-size:18px;font-weight:800;color:var(--t1)}
+/* 세션 선택 */
+.coach-sess-row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:10px;padding-bottom:2px}
+.coach-sess-row::-webkit-scrollbar{display:none}
+.csess{padding:6px 14px;border-radius:20px;background:var(--card);border:2px solid var(--bd);font-size:12px;font-weight:700;color:var(--t2);cursor:pointer;white-space:nowrap;font-family:inherit}
+.csess.cm{background:var(--blue);border-color:var(--blue);color:#fff}
+.csess.cw{background:var(--pink);border-color:var(--pink);color:#fff}
+/* 스테이션 테이블 */
+.coach-table{background:var(--card);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+.coach-tbl-hdr{display:flex;align-items:center;padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--bd);gap:8px}
+.ct-stname{flex:1;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px;text-transform:uppercase}
+.ct-player{min-width:64px;text-align:center;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px}
+.coach-row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid #f0ece4;gap:8px}
+.coach-row:last-child{border-bottom:none}
+.coach-row.tot-row{background:var(--bg);border-top:2px solid var(--bd)}
+.cr-ico{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.cr-ico.run{background:var(--rlight)}
+.cr-ico.work{background:var(--wlight)}
+.cr-name{flex:1;font-size:12px;font-weight:600;min-width:0}
+.cr-who{font-size:10px;color:var(--t3);margin-top:1px}
+.cr-time{min-width:64px;text-align:center;font-size:14px;font-weight:700;color:var(--t1)}
+.cr-time.best{color:var(--amber)}
+.cr-time.e{color:var(--t3);font-weight:400;font-size:12px}
+/* 업데이트 피드 */
+.coach-feed{margin:14px 16px 0;background:var(--card);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.feed-hdr{padding:12px 16px;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid #f0ece4}
+.feed-item{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid #f0ece4}
+.feed-item:last-child{border-bottom:none}
+.feed-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.feed-dot.m{background:var(--blue)}
+.feed-dot.w{background:var(--pink)}
+.feed-body{flex:1}
+.feed-txt{font-size:13px;font-weight:600}
+.feed-time{font-size:11px;color:var(--t3);margin-top:2px}
+.feed-val{font-size:15px;font-weight:800;color:var(--green)}
+
+/* ── SPLASH SCREEN ── */
+#splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+  transition: opacity .5s ease;
+}
+#splash-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+#splash-screen.gone { display: none; }
+.splash-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+.splash-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.75) 100%);
+}
+.splash-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 0 24px 56px;
+  width: 100%;
+}
+.splash-logo {
+  font-size: 42px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 8px;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.4);
+  margin-bottom: 8px;
+}
+.splash-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.75);
+  font-weight: 500;
+  letter-spacing: 2px;
+  margin-bottom: 32px;
+}
+.splash-loader {
+  width: 36px;
+  height: 3px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 2px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+.splash-loader::after {
+  content: '';
+  display: block;
+  width: 0%;
+  height: 100%;
+  background: #fff;
+  border-radius: 2px;
+  animation: splash-load 1.8s ease forwards;
+}
+@keyframes splash-load {
+  0%   { width: 0% }
+  60%  { width: 70% }
+  100% { width: 100% }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ SPLASH ══ -->
+<div id="splash-screen">
+  <img class="splash-img" src="/splash.jpg" alt="">
+  <div class="splash-overlay"></div>
+  <div class="splash-content">
+    <div class="splash-logo">HYROX</div>
+    <div class="splash-sub">RELAY TRACKER</div>
+    <div class="splash-loader"></div>
+  </div>
+</div>
+
+<!-- ══ SETUP ══ -->
+<div id="setup">
+  <div class="s-logo">HYROX <b>릴레이</b></div>
+  <div class="s-sub">나는 누구인가요?</div>
+  <div class="s-card">
+    <!-- 로딩 -->
+    <div id="sl" class="s-loading">
+      <div class="spinner"></div>
+      <div style="margin-top:14px;font-size:13px;color:var(--t2);font-weight:500">멤버 목록 불러오는 중...</div>
+    </div>
+    <!-- 선택 UI (Firebase 로드 후 표시) -->
+    <div id="sm" style="display:none">
+      <div class="s-lbl">팀 선택</div>
+      <div class="s-teams">
+        <button class="s-team-btn am" id="sb-m" onclick="sPick('men')">🔵 남자팀</button>
+        <button class="s-team-btn"    id="sb-w" onclick="sPick('women')">🩷 여자팀</button>
+      </div>
+      <div class="s-lbl">내 이름 선택</div>
+      <div class="s-list" id="s-list"></div>
+      <button class="s-enter em" id="s-enter" onclick="sEnter()">입장하기 →</button>
+      <div id="s-new-row-wrap">
+      <div class="s-divider"><span>새 멤버 추가</span></div>
+      <div class="s-new-row">
+        <input class="s-new-inp" id="s-inp" type="text" placeholder="이름 입력" maxlength="10"
+          onkeydown="if(event.key==='Enter')sAdd()">
+        <button class="s-new-btn" id="s-add-btn" onclick="sAdd()">추가</button>
+      </div>
+      </div>
+      <div class="s-divider"><span>또는</span></div>
+      <button onclick="enterCoach()" style="width:100%;background:none;border:2px solid var(--bd);border-radius:14px;padding:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;color:var(--t2)">📋 코치로 입장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SYNC BAR ══ -->
+<div class="sync-bar">
+  <div class="dot wait" id="dot"></div>
+  <div class="sync-txt" id="stxt">연결 중...</div>
+  <div class="sync-btns">
+    <button class="sync-btn" onclick="changeUser()">👤 바꾸기</button>
+  </div>
+</div>
+
+<!-- ══ TOPBAR ══ -->
+<div class="topbar">
+  <div class="topbar-title">HYROX <b>릴레이</b></div>
+  <div class="team-sw">
+    <button class="team-btn men on" id="tb-men"   onclick="setTeam('men')">🔵 남자팀</button>
+    <button class="team-btn women"  id="tb-women" onclick="setTeam('women')">🩷 여자팀</button>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab on" onclick="setNav('members')">팀 구성</button>
+    <button class="nav-tab"    onclick="setNav('lineup')">라인업</button>
+    <button class="nav-tab"    onclick="setNav('record')">기록 입력</button>
+    <button class="nav-tab"    onclick="setNav('summary')">결과 분석</button>
+  </div>
+</div>
+
+<div id="p-members" class="panel on"></div>
+<div id="p-lineup"  class="panel"></div>
+<div id="p-record"  class="panel"></div>
+<div id="p-summary" class="panel"></div>
+
+<!-- ══ COACH VIEW ══ -->
+<div id="coach-view">
+  <div class="coach-topbar">
+    <div class="coach-title">HYROX <b>코치</b></div>
+    <div class="coach-sub">전체 현황 실시간 모니터링</div>
+  </div>
+  <div id="coach-content"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════
+//  STATIONS
+// ════════════════════════════════════
+const ST = [
+  {id:'r1',t:'run', e:'🏃',n:'1km 런',      d:'1,000m 달리기'},
+  {id:'s1',t:'work',e:'🎿',n:'스키에르그',    d:'SkiErg 1,000m'},
+  {id:'r2',t:'run', e:'🏃',n:'1km 런',      d:'1,000m 달리기'},
+  {id:'s2',t:'work',e:'🛤️',n:'슬레드 밀기',  d:'Sled Push 50m'},
+  {id:'r3',t:'run', e:'🏃',n:'1km 런',      d:'1,000m 달리기'},
+  {id:'s3',t:'work',e:'🪢',n:'슬레드 당기기',d:'Sled Pull 50m'},
+  {id:'r4',t:'run', e:'🏃',n:'1km 런',      d:'1,000m 달리기'},
+  {id:'s4',t:'work',e:'💪',n:'버피 멀리뛰기', d:'Burpee Broad Jumps 80m'},
+  {id:'r5',t:'run', e:'🏃',n:'1km 런',      d:'1,000m 달리기'},
+  {id:'s5',t:'work',e:'🚣',n:'로잉',         d:'Rowing 1,000m'},
+  {id:'r6',t:'run', e:'🏃',n:'1km 런',      d:'1,000m 달리기'},
+  {id:'s6',t:'work',e:'🧺',n:'파머스 캐리',  d:'Farmers Carry 200m'},
+  {id:'r7',t:'run', e:'🏃',n:'1km 런',      d:'1,000m 달리기'},
+  {id:'s7',t:'work',e:'🏋️',n:'샌드백 런지', d:'Sandbag Lunges 100m'},
+  {id:'r8',t:'run', e:'🏃',n:'1km 런',      d:'1,000m 달리기'},
+  {id:'s8',t:'work',e:'🎯',n:'월볼',         d:'Wall Balls 75~100회'},
+];
+
+// ════════════════════════════════════
+//  STATE
+// ════════════════════════════════════
+const def = () => ({ members:[], lineup:{}, sessions:[] });
+let state = { men: def(), women: def() };
+let cTeam = 'men';
+let cNav  = 'members';
+let cSess = { men: null, women: null };
+
+// 현재 사용자
+let myName = localStorage.getItem('hx-name') || '';
+let myTeam = localStorage.getItem('hx-team') || ''; // 'men' | 'women'
+
+// 셋업 임시 상태
+let sTeam = 'men';   // 셋업 화면에서 선택한 팀
+let sPicked = '';    // 셋업 화면에서 선택한 이름
+
+const T    = () => state[cTeam];
+const isW  = () => cTeam === 'women';
+const ac   = () => isW() ? 'var(--pink)' : 'var(--blue)';
+const csel = () => isW() ? 'sw' : 'sm';
+const avC  = () => isW() ? 'w' : 'm';
+const fmt  = s => s ? `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}` : '—';
+
+// ════════════════════════════════════
+//  SETUP
+// ════════════════════════════════════
+function showSetup() {
+  sPicked = '';
+  sTeam = 'men';
+  document.getElementById('setup').classList.remove('hide');
+  // Firebase 이미 로드됐으면 바로 렌더
+  if (window.$fbReady) renderSetupUI();
+}
+
+function hideSetup() {
+  document.getElementById('setup').classList.add('hide');
+}
+
+// Firebase 첫 로드 후 셋업 UI 표시
+function renderSetupUI() {
+  document.getElementById('sl').style.display = 'none';
+  document.getElementById('sm').style.display = 'block';
+  sPick('men'); // 기본 남자팀
+}
+
+// 팀 선택
+function sPick(team) {
+  sTeam = team;
+  sPicked = '';
+  // 버튼 스타일
+  const bm = document.getElementById('sb-m');
+  const bw = document.getElementById('sb-w');
+  bm.className = 's-team-btn' + (team === 'men' ? ' am' : '');
+  bw.className = 's-team-btn' + (team === 'women' ? ' aw' : '');
+  // 입장 버튼 숨기기
+  const enterBtn = document.getElementById('s-enter');
+  enterBtn.style.display = 'none';
+  enterBtn.className = 's-enter ' + (team === 'women' ? 'ew' : 'em');
+  // 추가 버튼 색
+  document.getElementById('s-add-btn').className = 's-new-btn' + (team === 'women' ? ' pw' : '');
+  // 멤버 목록 렌더
+  renderSList();
+}
+
+function renderSList() {
+  const el = document.getElementById('s-list');
+  // ★ 핵심: sTeam으로 선택한 팀의 멤버만 가져옴
+  const members = state[sTeam]?.members || [];
+  const isWomen = sTeam === 'women';
+
+  // 4명 꽉 찼으면 추가 버튼 숨기기
+  const addRow = document.getElementById('s-new-row-wrap');
+  if (addRow) addRow.style.display = members.length >= 4 ? 'none' : 'block';
+
+  if (!members.length) {
+    el.innerHTML = `<div class="s-empty">이 팀에 등록된 멤버가 없어요<br>아래에서 이름을 추가하세요</div>`;
+    return;
+  }
+
+  el.innerHTML = members.map(m => {
+    const lineup = state[sTeam]?.lineup || {};
+    const asgn = ST.filter(s => lineup[s.id] === m.id).map(s => s.n).join(', ');
+    const sel  = sPicked === m.name;
+    const cls  = sel ? (isWomen ? 'pick-w' : 'pick-m') : '';
+    return `<div class="s-member ${cls}" onclick="sPickName('${m.name}')">
+      <div class="s-av ${isWomen ? 'w' : 'm'}">${m.name.charAt(0)}</div>
+      <div class="s-minfo">
+        <div class="s-mname">${m.name}</div>
+        ${asgn ? `<div class="s-msub">${asgn}</div>` : ''}
+      </div>
+      <div class="s-radio">${sel ? '✓' : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+function sPickName(name) {
+  sPicked = name;
+  renderSList();
+  const btn = document.getElementById('s-enter');
+  btn.textContent = `${name}으로 입장 →`;
+  btn.style.display = 'block';
+}
+
+function sEnter() {
+  if (!sPicked) return;
+  myName = sPicked;
+  myTeam = sTeam;
+  localStorage.setItem('hx-name', myName);
+  localStorage.setItem('hx-team', myTeam);
+  hideSetup();
+  cTeam = myTeam;
+  document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('tb-' + myTeam).classList.add('on');
+  // 완료 여부에 따라 디폴트 탭 결정
+  _applyNav(getDefaultNav());
+  renderAll();
+  updateSyncBar();
+}
+
+// 셋업에서 새 멤버 추가
+async function sAdd() {
+  const inp = document.getElementById('s-inp');
+  const name = inp.value.trim();
+  if (!name) return;
+  const existing = state[sTeam]?.members || [];
+  if (existing.length >= 4) { toast('팀원은 최대 4명까지 추가할 수 있어요'); return; }
+  if (existing.find(m => m.name === name)) { toast('이미 있는 이름이에요'); return; }
+  if (!state[sTeam]) state[sTeam] = def();
+  state[sTeam].members.push({ id: 'm' + Date.now(), name });
+  inp.value = '';
+  await fbSave();
+  renderSList();
+  toast(`${name} 추가됐어요`);
+}
+
+function changeUser() {
+  if (myTeam === 'coach') hideCoachView();
+  showSetup();
+}
+
+// ════════════════════════════════════
+//  FIREBASE
+// ════════════════════════════════════
+let saving = false;
+
+function setDot(s, txt) {
+  document.getElementById('dot').className = 'dot ' + s;
+  document.getElementById('stxt').textContent = txt;
+}
+
+function updateSyncBar() {
+  const now = new Date().toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
+  const teamLabel = myTeam === 'men' ? '남자팀' : myTeam === 'women' ? '여자팀' : myTeam === 'coach' ? '코치' : '';
+  setDot('live', `${myName || '—'} ${teamLabel} · ${now} 동기화됨`);
+}
+
+function initFirebase() {
+  if (!window.$fbReady) {
+    window.addEventListener('fb-ready', initFirebase, { once: true });
+    return;
+  }
+  setDot('wait', '데이터 불러오는 중...');
+
+  let firstLoad = true; // 첫 로드 플래그
+  window.$fb.listen(data => {
+    if (data) {
+      // Firebase는 배열을 {0:{}, 1:{}} object로 저장함 → 배열로 복원
+      const toArr = v => {
+        if (!v) return [];
+        if (Array.isArray(v)) return v.filter(Boolean);
+        return Object.values(v).filter(Boolean);
+      };
+
+      ['men','women'].forEach(teamKey => {
+        const raw = data[teamKey];
+        if (!raw) return;
+        state[teamKey] = {
+          members:  toArr(raw.members),
+          lineup:   raw.lineup   || {},
+          sessions: toArr(raw.sessions).map(s => ({ ...s, records: s.records || {} }))
+        };
+      });
+
+      // 최신 회차 자동 선택
+      ['men','women'].forEach(t => {
+        const ss = state[t]?.sessions;
+        if (ss?.length && !cSess[t]) cSess[t] = ss[ss.length-1].id;
+      });
+    }
+
+    // 셋업 화면이 열려있으면 목록 갱신
+    if (!document.getElementById('setup').classList.contains('hide')) {
+      renderSetupUI();
+    }
+
+    hideSplash();
+    updateSyncBar();
+    if (myName && myTeam) {
+      if (myTeam === 'coach') {
+        renderCoach();
+        if (firstLoad) firstLoad = false;
+      } else {
+        if (firstLoad) {
+          firstLoad = false;
+          _applyNav(getDefaultNav());
+        }
+        renderAll();
+      }
+    }
+  });
+}
+
+async function fbSave() {
+  if (saving) return;
+  saving = true;
+  setDot('wait', '저장 중...');
+  try {
+    // 저장 전 배열 null 슬롯 제거 (Firebase 배열 오염 방지)
+    const clean = (arr) => (arr || []).filter(Boolean);
+    const payload = {
+      men: {
+        members:  clean(state.men.members),
+        lineup:   state.men.lineup   || {},
+        sessions: clean(state.men.sessions).map(s => ({ ...s, records: s.records || {} }))
+      },
+      women: {
+        members:  clean(state.women.members),
+        lineup:   state.women.lineup   || {},
+        sessions: clean(state.women.sessions).map(s => ({ ...s, records: s.records || {} }))
+      }
+    };
+    await window.$fb.save(payload);
+    updateSyncBar();
+  } catch(e) {
+    setDot('err', '저장 실패 — 네트워크 확인');
+    toast('저장 실패 😢');
+  }
+  saving = false;
+}
+
+// ════════════════════════════════════
+//  NAV / TEAM
+// ════════════════════════════════════
+function setTeam(t) {
+  cTeam = t;
+  document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('tb-' + t).classList.add('on');
+  renderAll();
+}
+
+function _applyNav(nav) {
+  cNav = nav;
+  const navs = ['members','lineup','record','summary'];
+  document.querySelectorAll('.nav-tab').forEach((b,i) => b.classList.toggle('on', navs[i] === nav));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.getElementById('p-' + nav).classList.add('on');
+}
+
+function setNav(nav) {
+  _applyNav(nav);
+  renderAll();
+}
+
+function tog(bid, cid) {
+  document.getElementById(bid)?.classList.toggle('o');
+  document.getElementById(cid)?.classList.toggle('o');
+}
+
+// 팀 구성 + 라인업 완료 여부 체크
+function isTeamReady(teamKey) {
+  const t = state[teamKey];
+  if (!t) return false;
+  if (!t.members?.length) return false;                      // 멤버 없음
+  const allAssigned = ST.every(s => t.lineup?.[s.id]);      // 모든 스테이션 배정됨
+  return allAssigned;
+}
+
+// 현재 팀 기준 디폴트 탭 결정
+function getDefaultNav() {
+  return isTeamReady(cTeam) ? 'record' : 'members';
+}
+
+function renderAll() {
+  renderMembers();
+  renderLineup();
+  renderRecord();
+  renderSummary();
+}
+
+// ════════════════════════════════════
+//  WHO BANNER
+// ════════════════════════════════════
+function whoBanner() {
+  if (!myName) return '';
+  const isWomen = myTeam === 'women';
+  const teamLabel = isWomen ? '여자팀' : '남자팀';
+  return `<div class="who">
+    <div class="who-av ${isWomen ? 'w' : 'm'}">${myName.charAt(0)}</div>
+    <div class="who-info">
+      <div class="who-name">${myName}</div>
+      <div class="who-sub">실시간 연결됨</div>
+    </div>
+    <span class="who-badge ${isWomen ? 'wb-w' : 'wb-m'}">${teamLabel}</span>
+    <button class="who-change" onclick="changeUser()">바꾸기</button>
+  </div>`;
+}
+
+// ════════════════════════════════════
+//  MEMBERS
+// ════════════════════════════════════
+function renderMembers() {
+  const el = document.getElementById('p-members');
+  const t  = T();
+  const isWomen = isW();
+
+  const list = t.members.length
+    ? t.members.map(m => {
+        const asgn = ST.filter(s => t.lineup?.[s.id] === m.id).map(s => s.n).join(', ') || '배정 없음';
+        return `<div class="mi">
+          <div class="av ${avC()}">${m.name.charAt(0)}</div>
+          <div class="mi-body">
+            <div class="mi-name">${m.name}</div>
+            <div class="mi-sub">${asgn}</div>
+          </div>
+          <button class="del" onclick="delMember('${m.id}')">×</button>
+        </div>`;
+      }).join('')
+    : `<div class="empty"><div class="ei">👥</div><p>팀원을 추가해주세요</p></div>`;
+
+  const isFull = t.members.length >= 4;
+  const addForm = isFull
+    ? `<div class="card"><div style="padding:14px 16px;font-size:13px;color:var(--t3);text-align:center">
+        팀원이 모두 등록됐어요 (4/4) ✓
+       </div></div>`
+    : `<div class="card"><div class="inp-row">
+        <input class="inp" id="m-inp" type="text" placeholder="이름 입력" maxlength="10"
+          onkeydown="if(event.key==='Enter')addMember()">
+        <button class="btn ${isWomen ? 'pk' : ''}" onclick="addMember()">추가</button>
+       </div></div>`;
+
+  el.innerHTML = `${whoBanner()}
+    <div class="sec">팀원 ${t.members.length}/4명</div>
+    ${addForm}
+    <div class="sec">팀원 목록</div>
+    <div class="card">${list}</div>`;
+}
+
+async function addMember() {
+  const inp = document.getElementById('m-inp');
+  const name = inp.value.trim();
+  if (!name) return;
+  if (T().members.length >= 4) { toast('팀원은 최대 4명까지 추가할 수 있어요'); return; }
+  if (T().members.find(m => m.name === name)) { toast('이미 있는 이름이에요'); return; }
+  T().members.push({ id: 'm' + Date.now(), name });
+  inp.value = '';
+  await fbSave();
+  renderAll();
+  toast(`${name} 추가됐어요 ✓`);
+}
+
+async function delMember(id) {
+  if (!confirm('삭제할까요?')) return;
+  const t = T();
+  t.members = t.members.filter(m => m.id !== id);
+  Object.keys(t.lineup || {}).forEach(k => { if (t.lineup[k] === id) delete t.lineup[k]; });
+  await fbSave();
+  renderAll();
+}
+
+// ════════════════════════════════════
+//  LINEUP
+// ════════════════════════════════════
+function renderLineup() {
+  const el = document.getElementById('p-lineup');
+  const t  = T();
+  const isWomen = isW();
+
+  if (!t.members.length) {
+    el.innerHTML = `${whoBanner()}<div class="empty"><div class="ei">📋</div><p>먼저 팀원을 추가하세요</p></div>`;
+    return;
+  }
+
+  const rows = ST.map((s, i) => {
+    const mid    = t.lineup?.[s.id];
+    const member = t.members.find(m => m.id === mid);
+    const tag = member
+      ? `<span class="atag" style="background:${isWomen?'var(--plight)':'var(--blight)'};color:${ac()}">${member.name}</span>`
+      : `<span style="font-size:12px;color:var(--t3)">미배정</span>`;
+
+    const chips = t.members.map(mm =>
+      `<div class="chip ${mid === mm.id ? csel() : ''}" onclick="assign('${s.id}','${mm.id}')">${mm.name}</div>`
+    ).join('') + (mid ? `<div class="chip un" onclick="assign('${s.id}','')">해제</div>` : '');
+
+    return `<div class="sti">
+      <div class="sth" onclick="tog('lb${i}','lc${i}')">
+        <div class="stno">ST${i+1}</div>
+        <div class="stio ${s.t}">${s.e}</div>
+        <div class="stin">
+          <div class="stnm">${s.n}<span class="tpill ${s.t}">${s.t==='run'?'RUN':'WORK'}</span></div>
+          <div class="stds">${s.d}</div>
+        </div>
+        ${tag}
+        <span class="chv" id="lc${i}">›</span>
+      </div>
+      <div class="stb" id="lb${i}"><div class="chips">${chips}</div></div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `${whoBanner()}
+    <div class="sec">스테이션별 담당자 배정</div>
+    <div class="card">${rows}</div>`;
+}
+
+async function assign(sid, mid) {
+  if (!T().lineup) T().lineup = {};
+  if (mid) T().lineup[sid] = mid;
+  else delete T().lineup[sid];
+  await fbSave();
+  renderLineup(); renderRecord(); renderSummary();
+  toast('배정 저장됐어요 ✓');
+}
+
+// ════════════════════════════════════
+//  RECORD
+// ════════════════════════════════════
+function renderRecord() {
+  const el = document.getElementById('p-record');
+  const t  = T();
+  const isWomen = isW();
+  const sessId = cSess[cTeam];
+  const sess   = t.sessions?.find(s => s.id === sessId);
+
+  if (!t.members.length) {
+    el.innerHTML = `${whoBanner()}<div class="empty"><div class="ei">⏱️</div><p>먼저 팀원을 추가하고<br>라인업을 설정하세요</p></div>`;
+    return;
+  }
+
+  const chips = (t.sessions || []).map(s => {
+    const isActive = s.id === sessId;
+    const activeCls = isActive ? (isWomen ? 'aw' : 'am') : '';
+    return `<div class="schip ${activeCls}" onclick="selSess('${s.id}')">
+      ${s.label}
+      <button class="schip-btn" onclick="event.stopPropagation();delSess('${s.id}')" title="삭제">×</button>
+    </div>`;
+  }).join('');
+
+  const done = sess ? ST.filter(s => sess.records?.[s.id]).length : 0;
+  const tot  = sess ? ST.reduce((a, s) => a + (sess.records?.[s.id] || 0), 0) : 0;
+
+  const rows = sess ? ST.map((s, i) => {
+    const mid    = t.lineup?.[s.id];
+    const member = t.members.find(m => m.id === mid);
+    const rec    = sess.records?.[s.id];
+    const tag = member
+      ? `<span class="atag" style="background:${isWomen?'var(--plight)':'var(--blight)'};color:${ac()}">${member.name}</span>` : '';
+
+    return `<div class="sti">
+      <div class="sth" onclick="tog('rb${i}','rc${i}')">
+        <div class="stno">ST${i+1}</div>
+        <div class="stio ${s.t}">${s.e}</div>
+        <div class="stin">
+          <div class="stnm">${s.n}</div>
+          <div class="stds">${s.d}</div>
+        </div>
+        ${tag}
+        <div class="stt ${rec ? '' : 'e'}">${rec ? fmt(rec) : '—'}</div>
+        <span class="chv" id="rc${i}">›</span>
+      </div>
+      <div class="stb" id="rb${i}">
+        <div class="twrap">
+          <div class="tbox">
+            <input type="number" id="rm-${s.id}" min="0" max="99" placeholder="00" value="${rec ? Math.floor(rec/60) : ''}">
+            <span class="tcolon">:</span>
+            <input type="number" id="rs-${s.id}" min="0" max="59" placeholder="00" value="${rec ? rec%60 : ''}">
+            <span class="tunit">분 : 초</span>
+          </div>
+          <button class="sv" onclick="saveRec('${s.id}',${i})">저장</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') : '';
+
+  el.innerHTML = `${whoBanner()}
+    <div class="sec">연습 회차</div>
+    <div class="sbar">${chips}<button class="sadd" onclick="addSess()">+</button></div>
+    ${!t.sessions?.length
+      ? `<div class="empty"><div class="ei">📝</div><p>+ 버튼으로 연습 회차를 추가하세요</p></div>`
+      : `<div class="sec" style="margin-top:6px">${sess?.label || ''} · ${done}/${ST.length}개 · ${tot ? fmt(tot) : '진행중'}</div>
+         <div class="card">${rows}</div>`
+    }`;
+}
+
+async function addSess() {
+  const t = T();
+  if (!t.sessions) t.sessions = [];
+  const n  = t.sessions.length + 1;
+  const id = 'ss' + Date.now();
+  t.sessions.push({ id, label: `${n}회차`, records: {} });
+  cSess[cTeam] = id;
+  await fbSave();
+  renderRecord(); renderSummary();
+  toast(`${n}회차 추가됐어요 ✓`);
+}
+
+function selSess(id) { cSess[cTeam] = id; renderRecord(); }
+
+
+async function delSess(id) {
+  const t = T();
+  const sess = t.sessions?.find(s => s.id === id);
+  if (!sess) return;
+  if (!confirm(`'${sess.label}'을 삭제할까요?\n기록된 데이터도 모두 사라져요.`)) return;
+  t.sessions = t.sessions.filter(s => s.id !== id);
+  // 삭제한 게 현재 선택된 세션이면 마지막 세션으로 이동
+  if (cSess[cTeam] === id) {
+    cSess[cTeam] = t.sessions.length ? t.sessions[t.sessions.length - 1].id : null;
+  }
+  await fbSave();
+  renderRecord();
+  renderSummary();
+  toast(`${sess.label} 삭제됐어요`);
+}
+
+async function saveRec(sid, idx) {
+  const sess = T().sessions?.find(s => s.id === cSess[cTeam]);
+  if (!sess) return;
+  if (!sess.records) sess.records = {};
+  const m = parseInt(document.getElementById('rm-'+sid)?.value) || 0;
+  const s = parseInt(document.getElementById('rs-'+sid)?.value) || 0;
+  if (m === 0 && s === 0) delete sess.records[sid];
+  else sess.records[sid] = m * 60 + s;
+  await fbSave();
+  toast('기록 저장됐어요 ✓');
+  renderRecord(); renderSummary();
+  document.getElementById('rb'+idx)?.classList.add('o');
+  document.getElementById('rc'+idx)?.classList.add('o');
+}
+
+// ════════════════════════════════════
+//  SUMMARY
+// ════════════════════════════════════
+function renderSummary() {
+  const el = document.getElementById('p-summary');
+  const t  = T();
+  const isWomen = isW();
+
+  if (!t.sessions?.length) {
+    el.innerHTML = `${whoBanner()}<div class="empty"><div class="ei">📊</div><p>기록을 입력하면 분석이 표시됩니다</p></div>`;
+    return;
+  }
+
+  const totals = t.sessions
+    .map(s => ({ sess: s, total: ST.reduce((a, st) => a + (s.records?.[st.id] || 0), 0) }))
+    .filter(x => x.total > 0)
+    .sort((a, b) => a.total - b.total);
+  const best   = totals[0];
+  const latest = t.sessions[t.sessions.length - 1];
+  const latestTot = ST.reduce((a, s) => a + (latest.records?.[s.id] || 0), 0);
+  const recent = t.sessions.slice(-3);
+
+  const stRows = ST.map((s, i) => {
+    const mid    = t.lineup?.[s.id];
+    const member = t.members.find(m => m.id === mid);
+    const times  = recent.map(ss => ss.records?.[s.id] || null);
+    const valid  = times.filter(Boolean);
+    const bestT  = valid.length ? Math.min(...valid) : null;
+
+    const cells = recent.map(ss => {
+      const tt = ss.records?.[s.id];
+      return `<div class="srcell">
+        <div class="srv ${!tt?'e':tt===bestT&&valid.length>1?'best':''}">${tt ? fmt(tt) : '—'}</div>
+        <div class="srsl">${ss.label}</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="sr">
+      <div class="srico ${s.t==='run'?'run':'work'}">${s.e}</div>
+      <div class="srb">
+        <div class="srn">${s.n}</div>
+        <div class="srw">${member ? member.name : '미배정'}</div>
+      </div>
+      <div class="srcells">${cells}</div>
+    </div>`;
+  }).join('');
+
+  const totalRow = `<div class="sr tot">
+    <div class="srico" style="background:#fffbeb">🏁</div>
+    <div class="srb">
+      <div class="srn" style="font-weight:800">합계</div>
+      <div class="srw">${t.sessions.length}회 측정</div>
+    </div>
+    <div class="srcells">
+      ${recent.map(ss => {
+        const tot = ST.reduce((a, st) => a + (ss.records?.[st.id] || 0), 0);
+        const isBest = best && tot === best.total && tot > 0;
+        return `<div class="srcell">
+          <div class="srv ${!tot?'e':isBest?'best':''}">${tot ? fmt(tot) : '—'}</div>
+          ${isBest ? `<div class="bb">BEST</div>` : `<div class="srsl">${ss.label}</div>`}
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+
+  el.innerHTML = `${whoBanner()}
+    <div class="hero ${isWomen ? 'hw' : 'hm'}">
+      <div class="hlbl">최고 기록</div>
+      <div class="htime">${best ? fmt(best.total) : '—'}</div>
+      <div class="hsub">${best ? best.sess.label : '아직 기록 없음'}</div>
+      <div class="hpills">
+        <div class="hpill">총 <b>${t.sessions.length}회</b> 측정</div>
+        ${latestTot ? `<div class="hpill">최근 <b>${fmt(latestTot)}</b></div>` : ''}
+        ${totals.length > 1 ? `<div class="hpill">📈 기록 향상 중</div>` : ''}
+      </div>
+    </div>
+    <div class="sec" style="margin-top:12px">회차별 기록 비교 (최근 ${recent.length}회)</div>
+    <div class="stbl">${stRows}${totalRow}</div>`;
+}
+
+// ════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('on'), 2200);
+}
+
+
+// ════════════════════════════════════
+//  COACH MODE
+// ════════════════════════════════════
+function enterCoach() {
+  myName = '코치';
+  myTeam = 'coach';
+  localStorage.setItem('hx-name', myName);
+  localStorage.setItem('hx-team', myTeam);
+  hideSetup();
+  showCoachView();
+  updateSyncBar();
+}
+
+function showCoachView() {
+  // 선수 UI 숨기기
+  document.querySelector('.topbar').style.display = 'none';
+  document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
+  document.getElementById('coach-view').classList.add('on');
+  renderCoach();
+}
+
+function hideCoachView() {
+  document.querySelector('.topbar').style.display = '';
+  document.querySelectorAll('.panel').forEach(p => p.style.display = '');
+  document.getElementById('coach-view').classList.remove('on');
+}
+
+// 코치 세션 선택 상태
+let coachSess = { men: null, women: null };
+
+function coachSelSess(team, id) {
+  coachSess[team] = id;
+  renderCoach();
+}
+
+function renderCoach() {
+  const el = document.getElementById('coach-content');
+  if (!el) return;
+
+  const fmt2 = s => s ? `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}` : '—';
+
+  let html = '';
+
+  ['men','women'].forEach(teamKey => {
+    const t = state[teamKey];
+    const isWomen = teamKey === 'women';
+    const label = isWomen ? '🩷 여자팀' : '🔵 남자팀';
+    const bdgCls = isWomen ? 'ctb-w' : 'ctb-m';
+    const sessCls = isWomen ? 'cw' : 'cm';
+
+    // 현재 선택된 세션
+    const sessions = t?.sessions || [];
+    if (!coachSess[teamKey] && sessions.length) {
+      coachSess[teamKey] = sessions[sessions.length - 1].id;
+    }
+    const sess = sessions.find(s => s.id === coachSess[teamKey]);
+
+    // 베스트 기록
+    const totals = sessions
+      .map(s => ST.reduce((a, st) => a + (s.records?.[st.id] || 0), 0))
+      .filter(Boolean);
+    const bestTotal = totals.length ? Math.min(...totals) : 0;
+
+    // 멤버 이름 목록 (라인업 기준)
+    const members = t?.members || [];
+    const lineup = t?.lineup || {};
+
+    // 세션 선택 칩
+    const sessChips = sessions.map(s =>
+      `<div class="csess ${s.id === coachSess[teamKey] ? sessCls : ''}"
+        onclick="coachSelSess('${teamKey}','${s.id}')">${s.label}</div>`
+    ).join('') || `<div style="font-size:12px;color:var(--t3);padding:4px">기록 없음</div>`;
+
+    // 현재 세션 합계
+    const sessTotal = sess ? ST.reduce((a, s) => a + (sess.records?.[s.id] || 0), 0) : 0;
+
+    // 테이블 헤더 - 멤버 이름 (최대 4명)
+    const memberCols = members.map(m =>
+      `<div class="ct-player" style="color:${isWomen?'var(--pink)':'var(--blue)'}">${m.name}</div>`
+    ).join('');
+
+    // 스테이션별 행
+    const rows = ST.map((s, i) => {
+      const assignedMid = lineup[s.id];
+      const assignedMember = members.find(m => m.id === assignedMid);
+      const rec = sess?.records?.[s.id];
+
+      // 각 멤버별 칼럼 (담당자만 시간, 나머지는 —)
+      const cols = members.map(m => {
+        if (m.id !== assignedMid) return `<div class="ct-player"><span style="color:var(--t3);font-size:12px">—</span></div>`;
+        return `<div class="ct-player"><span class="cr-time ${rec?'':'e'}">${rec ? fmt2(rec) : '미기록'}</span></div>`;
+      }).join('');
+
+      return `<div class="coach-row">
+        <div class="cr-ico ${s.t}">${s.e}</div>
+        <div style="flex:1;min-width:0">
+          <div class="cr-name">ST${i+1} ${s.n}</div>
+          <div class="cr-who">${assignedMember ? assignedMember.name : '미배정'}</div>
+        </div>
+        ${cols}
+      </div>`;
+    }).join('');
+
+    // 합계 행
+    const totalCols = members.map(m => {
+      // 해당 멤버가 담당한 스테이션들의 합계
+      const myTotal = ST.reduce((a, s) => {
+        if (lineup[s.id] !== m.id) return a;
+        return a + (sess?.records?.[s.id] || 0);
+      }, 0);
+      return `<div class="ct-player"><span style="font-size:15px;font-weight:800;color:${isWomen?'var(--pink)':'var(--blue)'}">${myTotal ? fmt2(myTotal) : '—'}</span></div>`;
+    }).join('');
+
+    html += `
+    <div class="coach-team-block">
+      <div class="coach-team-hdr">
+        <div class="coach-team-label">${label}</div>
+        <span class="coach-team-badge ${bdgCls}">${members.length}/4명</span>
+        ${bestTotal ? `<div class="coach-best">베스트 <b>${fmt2(bestTotal)}</b></div>` : ''}
+      </div>
+      <div class="coach-sess-row">${sessChips}</div>
+      ${sessions.length ? `
+      <div class="coach-table">
+        <div class="coach-tbl-hdr">
+          <div style="width:28px"></div>
+          <div class="ct-stname">스테이션</div>
+          ${memberCols}
+        </div>
+        ${rows}
+        <div class="coach-row tot-row">
+          <div style="width:28px">🏁</div>
+          <div style="flex:1;font-size:13px;font-weight:800">합계</div>
+          ${totalCols}
+        </div>
+      </div>
+      <div style="padding:8px 0 4px;text-align:right;font-size:12px;color:var(--t2)">
+        ${sess?.label || ''} 전체 합산: <b style="color:var(--t1)">${sessTotal ? fmt2(sessTotal) : '—'}</b>
+      </div>` : `<div style="padding:16px 0;text-align:center;font-size:13px;color:var(--t3)">아직 기록이 없어요</div>`}
+    </div>`;
+  });
+
+  // 최근 변경 피드
+  const allEvents = [];
+  ['men','women'].forEach(teamKey => {
+    const t = state[teamKey];
+    (t?.sessions || []).forEach(s => {
+      Object.entries(s.records || {}).forEach(([sid, sec]) => {
+        const station = ST.find(st => st.id === sid);
+        const member = t.members?.find(m => m.id === (t.lineup?.[sid]));
+        if (station && sec) {
+          allEvents.push({
+            team: teamKey,
+            sess: s.label,
+            station: station.n,
+            member: member?.name || '?',
+            time: sec
+          });
+        }
+      });
+    });
+  });
+
+  const feedHtml = allEvents.length ? allEvents.slice(-8).reverse().map(ev => `
+    <div class="feed-item">
+      <div class="feed-dot ${ev.team === 'women' ? 'w' : 'm'}"></div>
+      <div class="feed-body">
+        <div class="feed-txt">${ev.member} · ${ev.station}</div>
+        <div class="feed-time">${ev.team === 'women' ? '여자팀' : '남자팀'} · ${ev.sess}</div>
+      </div>
+      <div class="feed-val">${fmt2(ev.time)}</div>
+    </div>`).join('')
+  : `<div style="padding:20px;text-align:center;font-size:13px;color:var(--t3)">기록된 항목이 없어요</div>`;
+
+  html += `
+  <div class="coach-feed" style="margin-top:14px">
+    <div class="feed-hdr">최근 기록 현황</div>
+    ${feedHtml}
+  </div>`;
+
+  el.innerHTML = html;
+}
+
+
+// ── SPLASH ──
+function hideSplash() {
+  const el = document.getElementById('splash-screen');
+  if (!el || el.classList.contains('gone')) return;
+  el.classList.add('fade-out');
+  setTimeout(() => el.classList.add('gone'), 550);
+}
+// 최소 1.8초 표시 후 숨기기
+const splashTimer = setTimeout(hideSplash, 1800);
+
+// ════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════
+if (myName && myTeam) {
+  hideSetup();
+  if (myTeam === 'coach') {
+    showCoachView();
+  } else {
+    cTeam = myTeam;
+    document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('on'));
+    document.getElementById('tb-' + myTeam)?.classList.add('on');
+    _applyNav('members');
+  }
+  updateSyncBar();
+}
+// Firebase 초기화 (리스너 시작)
+initFirebase();
+
+// ── 디버그: 콘솔에서 데이터 확인용
+window._dbg = () => console.log(JSON.stringify(state, null, 2));
+window._resetDB = async () => {
+  if (!confirm('DB를 초기화할까요? (기존 데이터 모두 삭제)')) return;
+  state = { men: def(), women: def() };
+  await fbSave();
+  alert('초기화 완료');
+};
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('SW registered'))
+        .catch(err => console.log('SW error:', err));
+    });
+  }
+</script>
+</body>
+</html>

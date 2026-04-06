@@ -1,0 +1,24 @@
+{
+  "name": "HYROX 릴레이",
+  "short_name": "HYROX",
+  "description": "하이록스 릴레이 팀 기록 트래커",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f2ede4",
+  "theme_color": "#f2ede4",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
